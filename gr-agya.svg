@@ -1,0 +1,85 @@
+<svg width="500" height="85" viewBox="0 0 500 85" xmlns="http://www.w3.org/2000/svg">
+
+  <defs>
+
+    <linearGradient id="agyaChrome"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="100%">
+
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="20%" stop-color="#efefef"/>
+      <stop offset="40%" stop-color="#bdbdbd"/>
+      <stop offset="55%" stop-color="#fafafa"/>
+      <stop offset="80%" stop-color="#8a8a8a"/>
+      <stop offset="100%" stop-color="#606060"/>
+
+    </linearGradient>
+
+  </defs>
+
+  <!-- BLACK -->
+
+  <rect x="10"
+        y="8"
+        width="52"
+        height="44"
+        rx="5"
+        fill="#111111"/>
+
+  <!-- RED -->
+
+  <rect x="55"
+        y="8"
+        width="52"
+        height="44"
+        rx="5"
+        fill="#E40012"/>
+
+  <!-- G -->
+
+  <text x="36"
+        y="39"
+        fill="white"
+        font-size="25"
+        font-weight="700"
+        text-anchor="middle"
+        font-family="Segoe UI">
+
+      G
+
+  </text>
+
+  <!-- R -->
+
+  <text x="81"
+        y="39"
+        fill="white"
+        font-size="25"
+        font-weight="700"
+        text-anchor="middle"
+        font-family="Segoe UI">
+
+      R
+
+  </text>
+
+  <!-- AGYA -->
+
+  <text x="123"
+        y="52"
+        fill="url(#agyaChrome)"
+        stroke="#666666"
+        stroke-width="1"
+        font-size="58"
+        font-weight="900"
+        font-style="italic"
+        letter-spacing="-2"
+        font-family="Segoe UI Black">
+
+      AGYA
+
+  </text>
+
+</svg>

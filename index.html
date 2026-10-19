@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CC Tracking Mobile</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#163a70">
+    
+    <!-- LEAFLET CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- LEAFLET ROUTING MACHINE CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; color: #1f2937; padding: 16px; }
+        
+        .card { position: relative; background-color: #ffffff; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); max-width: 480px; margin: 0 auto; }
+        .update-indicator { position: absolute; top: 12px; right: 16px; font-size: 10px; color: #9ca3af; font-weight: bold; }
+        .title { text-align: center; font-size: 20px; font-weight: 700; color: #163a70; margin-bottom: 16px; }
+        
+        #inputGroup { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+        input[type="text"], select { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; text-transform: uppercase; font-weight: 600; color: #163a70; background-color: #ffffff; }
+        
+        #mapContainer { position: relative; display: none; width: 100%; height: 280px; border-radius: 8px; overflow: hidden; margin-bottom: 16px; border: 1px solid #d1d5db; transition: all 0.3s; }
+        #map { width: 100%; height: 100%; z-index: 1; }
+
+        /* KELAS FULLSCREEN MAP */
+        .map-fullscreen { position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 99999 !important; border-radius: 0 !important; border: none !important; margin: 0 !important; }
+        
+        .btn-full-map { position: absolute; top: 10px; right: 10px; z-index: 999; background: #ffffff; color: #1e3a8a; border: 2px solid #1e3a8a; padding: 6px 12px; border-radius: 6px; font-weight: 800; font-size: 12px; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
+        .btn-full-map:active { background: #e2e8f0; }
+
+        .button-group { display: flex; gap: 10px; margin-bottom: 16px; }
+        button { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 14px; }
+        .btn-start { background-color: #163a70; color: #ffffff; }
+        .btn-end { background-color: #dc2626; color: #ffffff; display: none; }
+        
+        .status-box { text-align: center; padding: 12px; border-radius: 8px; background-color: #fee2e2; color: #991b1b; font-weight: 700; margin-bottom: 16px; font-size: 15px; transition: all 0.3s ease; }
+        .status-loading { background: #ffc107 !important; color: #212529 !important; }
+        .status-persiapan-loading { background: #fd7e14 !important; color: #ffffff !important; }
+        .status-delivery { background: #198754 !important; color: #ffffff !important; }
+        .status-unloading { background: #6f42c1 !important; color: #ffffff !important; }
+        .status-ready-sjkb { background: #0dcaf0 !important; color: #212529 !important; }
+        .status-online { background: #d1e7dd !important; color: #0f5132 !important; border: 1px solid #badbcc; }
+        
+        .queue-section { margin-top: 12px; border-top: 1px solid #e5e7eb; padding-top: 12px; }
+        .queue-title { font-size: 14px; font-weight: 700; color: #163a70; margin-bottom: 8px; }
+        .queue-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .queue-table th { background-color: #163a70; color: white; padding: 8px; text-align: left; }
+        .queue-table td { padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: 600; }
+        .badge-small { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; display: inline-block; }
+
+        .driver-balloon-wrapper { background: transparent !important; border: none !important; }
+        .driver-speech-bubble { position: relative; display: inline-block; width: auto; min-width: 70px; background: #ffffff; border-radius: 10px; padding: 4px 10px; text-align: center; white-space: nowrap; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); border: 2px solid #1e293b; color: #0f172a; transform: translateX(-50%); }
+        .driver-speech-bubble::after { content: ''; position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); border-width: 8px 6px 0 6px; border-style: solid; border-color: #1e293b transparent transparent transparent; }
+
+        .bubble-online { background-color: #d1e7dd !important; border-color: #0f5132 !important; color: #0f5132 !important; }
+        .bubble-online::after { border-color: #0f5132 transparent transparent transparent !important; }
+        .bubble-ready-sjkb { background-color: #cff4fc !important; border-color: #055160 !important; color: #055160 !important; }
+        .bubble-ready-sjkb::after { border-color: #055160 transparent transparent transparent !important; }
+        .bubble-persiapan-loading { background-color: #fff3cd !important; border-color: #664d03 !important; color: #664d03 !important; }
+        .bubble-persiapan-loading::after { border-color: #664d03 transparent transparent transparent !important; }
+        .bubble-loading { background-color: #ffe8cc !important; border-color: #d9730d !important; color: #d9730d !important; }
+        .bubble-loading::after { border-color: #d9730d transparent transparent transparent !important; }
+        .bubble-delivery { background-color: #fcc2d7 !important; border-color: #c2255c !important; color: #c2255c !important; }
+        .bubble-delivery::after { border-color: #c2255c transparent transparent transparent !important; }
+        .bubble-unloading { background-color: #eebefa !important; border-color: #862e9c !important; color: #862e9c !important; }
+        .bubble-unloading::after { border-color: #862e9c transparent transparent transparent !important; }
+
+        .radar-marker-eky { position: relative; width: 14px; height: 14px; background-color: #1d4ed8; border-radius: 50%; border: 2px solid #ffffff; box-shadow: 0 0 4px rgba(0,0,0,0.4); }
+        .label-location-eky { color: #1d4ed8; font-weight: 800; font-size: 11px; text-shadow: 1px 1px 2px #fff, -1px -1px 2px #fff, 1px -1px 2px #fff, -1px 1px 2px #fff; white-space: nowrap; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div id="lblUpdate" class="update-indicator">Update: -</div>
+        <div class="title">CC TRACKING SYSTEM</div>
+        
+        <div id="inputGroup">
+            <input type="text" id="inputNopol" placeholder="MASUKKAN NOPOL (CONTOH: B 2345 XXX)">
+            <input type="text" id="inputNama" placeholder="NAMA DRIVER (CONTOH: BUDI)">
+            <select id="selectDurasi">
+                <option value="12">BERBAGI LOKASI: 12 JAM</option>
+                <option value="8">BERBAGI LOKASI: 8 JAM</option>
+            </select>
+        </div>
+
+        <div id="mapContainer">
+            <!-- Tombol Full Map -->
+            <button id="btnToggleFullMap" class="btn-full-map">🔍 FULL MAP</button>
+            <div id="map"></div>
+        </div>
+
+        <div class="button-group">
+            <button id="btnStart" class="btn-start">MULAI TRIP</button>
+            <button id="btnEnd" class="btn-end">🛑 AKHIRI TRIP & KELUAR</button>
+        </div>
+        
+        <div id="statusBadge" class="status-box">🔴 OFFLINE</div>
+        
+        <div id="durationBadge" style="text-align: center; font-size: 13px; font-weight: bold; color: #163a70; margin-bottom: 12px; display: none;">
+            ⏱️ SISA WAKTU BERBAGI LOKASI: <span id="lblSisaWaktu">-</span>
+        </div>
+        
+        <div class="queue-section">
+            <div class="queue-title">ANTRIAN CC UTAMA</div>
+            <table class="queue-table">
+                <thead>
+                    <tr><th>#</th><th>NOPOL / DRIVER</th><th>JARAK</th><th>STATUS</th></tr>
+                </thead>
+                <tbody id="driverQueueBody">
+                    <tr><td colspan="4" style="text-align:center; color:#888;">Memuat antrian...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- MODAL PANGGILAN LOADING -->
+    <div id="loadingModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 999999; justify-content: center; align-items: center; padding: 20px;">
+        <div style="background: white; border-radius: 16px; padding: 24px; max-width: 400px; width: 100%; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
+            <div style="font-size: 40px; margin-bottom: 10px;">⚠️</div>
+            <h2 style="color: #163a70; margin-bottom: 10px; font-size: 20px; font-weight: 800;">PANGGILAN LOADING!</h2>
+            <p style="color: #4b5563; font-size: 14px; margin-bottom: 20px;">Silakan segera menuju dan masuk ke <b>Stall Loading ADM</b>.</p>
+            <button id="btnAcceptLoading" style="background: #163a70; color: white; padding: 14px; border: none; border-radius: 10px; font-weight: bold; width: 100%; font-size: 14px; cursor: pointer;">TERIMA / MASUK STALL</button>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MESIN KAMUFLASE STREAMING RADIO (AKTIF 24 JAM) -->
+    <!-- ========================================== -->
+    <audio id="audioCamouflage" loop style="display:none;" src="https://stream.radiojar.com/8s5u5tp8w32uv"></audio>
+
+    <!-- LEAFLET JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- LEAFLET ROUTING MACHINE JS -->
+    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+    
+    <!-- SCRIPT UTAMA -->
+    <script type="module" src="app.js"></script> 
+</body>
+</html>
